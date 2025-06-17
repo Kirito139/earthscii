@@ -7,7 +7,7 @@ from map_loader import load_dem_as_points
 
 
 def main(stdscr):
-    """Initialize curses."""
+    """Main loop."""
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.timeout(50)
@@ -19,8 +19,7 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
 
-
-    map_data, transform = load_dem_as_points("/Users/lmulder/earthscii/data/n37_w123_1arc_v3.tif")
+    map_data, transform = load_dem_as_points("data/n37_w123_1arc_v3.tif")
 
     angle = 0
     zoom = 1.0
@@ -29,6 +28,12 @@ def main(stdscr):
     prev_state = None
 
     buffer = curses.newwin(height, width, 0, 0)
+    buffer.border(
+        curses.ACS_VLINE, curses.ACS_VLINE,  # Left and right borders
+        curses.ACS_HLINE, curses.ACS_HLINE,  # Top and bottom borders
+        curses.ACS_ULCORNER, curses.ACS_URCORNER,  # Corners
+        curses.ACS_LLCORNER, curses.ACS_LRCORNER
+    )
 
     while True:
         try:
