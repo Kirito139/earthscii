@@ -14,18 +14,18 @@ TILE_DIR = Path("./tiles")
 TILE_DIR.mkdir(parents=True, exist_ok=True)
 PARTIAL_SUFFIX = ".partial"
 
-def estimate_fov_from_screen(forward_vec, zoom, screen_width, screen_height):
-    """
-    Estimate the angular field of view in degrees covered by the screen.
-    """
+
+def estimate_fov_from_screen(forward_vec, zoom, screen_width, screen_height,
+                             aspect_ratio=0.5):
+    """Estimate the angular field of view in degrees covered by the screen."""
     EARTH_RADIUS = 6371000  # meters
-    ASPECT_RATIO = 0.5  # same as in projection
     screen_width_m = screen_width / zoom
-    screen_height_m = screen_height / (zoom * ASPECT_RATIO)
+    screen_height_m = screen_height / (zoom * aspect_ratio)
 
     # Convert visible width on screen (in meters) into angle at Earth's surface
     angular_width_deg = math.degrees(screen_width_m / EARTH_RADIUS)
     angular_height_deg = math.degrees(screen_height_m / EARTH_RADIUS)
+    log(f"[\033[92mDEBUG\033[0m] FOV: {angular_width_deg:.2f}° x {angular_height_deg:.2f}°")
     return angular_width_deg, angular_height_deg
 
 
@@ -72,6 +72,7 @@ def latlon_from_vector(v):
     lon = math.degrees(math.atan2(y, x))
     return lat, lon
 
+
 def vector_from_latlon(lat, lon):
     """Converts geographic coordinates to a 3D unit vector."""
     lat_rad = math.radians(lat)
@@ -82,25 +83,25 @@ def vector_from_latlon(lat, lon):
     return x, y, z
 
 
+def down_to_15(x): return (x // 15) * 15
 
-def align_to_15(x):
-    """Round x to the nearest multiple of 15."""
-    return int(round(x / 15)) * 15
+def up_to_15(x): return ((x+14) // 15) * 15
 
-
-def get_visible_tile_coords(forward_vec, fov_degrees, padding):
+def get_visible_tile_coords(forward_vec, fov_lat, fov_lon, padding):
     lat_center, lon_center = latlon_from_vector(forward_vec)
-    lat_min = int(lat_center - fov_degrees // 2) - padding
-    lat_max = int(lat_center + fov_degrees // 2) + padding
-    lon_min = int(lon_center - fov_degrees // 2) - padding
-    lon_max = int(lon_center + fov_degrees // 2) + padding
+
+    lat_min = int(lat_center - fov_lat // 2) - padding
+    lat_max = int(lat_center + fov_lat // 2) + padding
+    lon_min = int(lon_center - fov_lon // 2) - padding
+    lon_max = int(lon_center + fov_lon // 2) + padding
+
     lat_min = max(-85, lat_min)
     lat_max = min(85, lat_max)
 
-    lat_min_aligned = align_to_15(lat_min)
-    lat_max_aligned = align_to_15(lat_max)
-    lon_min_aligned = align_to_15(lon_min)
-    lon_max_aligned = align_to_15(lon_max)
+    lat_min_aligned = down_to_15(lat_min)
+    lat_max_aligned = up_to_15(lat_max)
+    lon_min_aligned = down_to_15(lon_min)
+    lon_max_aligned = up_to_15(lon_max)
 
     return [
         (lat, lon)
@@ -109,34 +110,47 @@ def get_visible_tile_coords(forward_vec, fov_degrees, padding):
     ]
 
 
-def load_visible_globe_points(forward_vec, zoom, screen_width, screen_height):
+def load_visible_globe_points(forward_vec, zoom, screen_width, screen_height,
+                              aspect_ratio=0.5):
     fov_horiz, fov_vert = estimate_fov_from_screen(forward_vec, zoom,
-                                                   screen_width, screen_height)
-    tile_coords = get_visible_tile_coords(forward_vec, fov_degrees=fov_horiz,
+                                                   screen_width, screen_height,
+                                                   aspect_ratio)
+    tile_coords = get_visible_tile_coords(forward_vec, fov_vert, fov_horiz,
                                           padding=1)
     paths = []
     for lat, lon in tile_coords:
         path = download_etopo2022_tile(lat, lon)
-        log(f"[INFO] Downloading tile: lat={lat}, lon={lon}")
+        log(f"[\033[32mINFO\033[0m] Downloading tile: lat={lat}, lon={lon}")
         if path:
             paths.append(path)
 
     stride = compute_lod_stride(zoom)
     all_points = []
     for path in paths:
-        points = load_etopo_as_sphere_points(path, stride=stride)
+        try:
+            points = load_etopo_as_sphere_points(path, stride=stride)
+            if points is None:
+                log(f"[\033[31mERROR\033[0m] No points returned from: {path}")
+                continue
+        except Exception as e:
+            log(f"[\033[31mEXCEPTION\033[0m] Failed to load {path}: {e}")
+            continue
         all_points.extend(points)
 
-    log(f"[DEBUG] Looking for tiles near: {latlon_from_vector(forward_vec)}")
-    log(f"[DEBUG] Tile coords to load: {tile_coords}")
-    log(f"[INFO] Loaded {len(paths)} tile(s)")
-    log(f"[INFO] Loaded {len(all_points)} points")
+    log(f"[\033[92mDEBUG\033[0m] Looking for tiles near: {latlon_from_vector(forward_vec)}")
+    log(f"[\033[92mDEBUG\033[0m] Tile coords to load: {tile_coords}")
+    log(f"[\033[32mINFO\033[0m] Loaded {len(paths)} tile(s)")
+    log(f"[\033[32mINFO\033[0m] Loaded {len(all_points)} points")
+
+    if not all_points:
+        log("[\033[91mFATAL\033[0m] No points to render!")
+        raise RuntimeError("No terrain data loaded.")
 
     return all_points
 
 
 def compute_lod_stride(zoom):
-    log(f"[DEBUG] stride in use with zoom: {zoom}")
+    log(f"[\033[92mDEBUG\033[0m] stride in use with zoom: {zoom}")
     if zoom > 3.0:
         return 2
     elif zoom > 2.0:

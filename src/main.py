@@ -6,11 +6,9 @@ import numpy as np
 from projection import project_map
 from renderer import render_map
 from map_loader import load_dem_as_points
-from globe_loader import load_tiles_as_sphere_points
 from globe_projection import project_globe
 from globe_tile_manager import load_visible_globe_points
 from globe_tile_manager import vector_from_latlon
-from globe_tile_manager import estimate_fov_from_screen
 import datetime
 
 def log(msg):
@@ -20,6 +18,7 @@ def log(msg):
 
 
 def main(stdscr):
+    log("[\033[32mINFO\033[0m] New session started\n------------")
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.timeout(50)
@@ -38,16 +37,26 @@ def main(stdscr):
                         help="Enable global view")
     parser.add_argument("--lat", type=float, help="Initial latitude")
     parser.add_argument("--lon", type=float, help="Initial longitude")
+    parser.add_argument(
+        "--aspect",
+        type=float,
+        default=None,
+        help="Override aspect ratio (e.g., 0.5 for standard terminals)"
+    )
+
 
     args = parser.parse_args()
+
 
     is_global = args.globe
 
     angle_x = 0
     angle_y = 90
     angle_z = 0
-    zoom = 1.5
+    zoom = 0.8
     height, width = stdscr.getmaxyx()
+    aspect_ratio = args.aspect if args.aspect is not None else min(height /
+                                                                   width, 0.4)
 
     if is_global:
         if args.lat is not None and args.lon is not None:
@@ -65,11 +74,12 @@ def main(stdscr):
             fz = np.sin(np.radians(angle_y)) * np.cos(np.radians(angle_x))
             forward_vec = np.array([fx, fy, fz])
 
-            log(f"[DEBUG] forward_vec = {forward_vec}")
-            log(f"[DEBUG] zoom = {zoom}, screen = {width}x{height}")
+            log(f"[\033[92mDEBUG\033[0m] forward_vec = {forward_vec}")
+            log(f"[\033[92mDEBUG\033[0m] zoom = {zoom}, screen = {width}x{height}")
 
-        globe_points = load_visible_globe_points(forward_vec, zoom, width,
-                                                 height)
+        globe_points = load_visible_globe_points(
+            forward_vec, zoom, width, height, aspect_ratio
+        )
 
     else:
         if not args.tile:
@@ -86,7 +96,8 @@ def main(stdscr):
             key = stdscr.getch()
 
             changed = False
-            if key in (ord('q'), 3, 24):  # q, ctrl-c, ctrl-x
+            if key == ord('q'):
+                log("[\033[32mINFO\033[0m] Exiting\n------------")
                 break
             elif key == ord('w'):  # tilt up
                 angle_x -= 5
@@ -138,9 +149,9 @@ def main(stdscr):
                     np.sin(np.radians(angle_x)),
                     np.sin(np.radians(angle_y)) * np.cos(np.radians(angle_x))
                 ])
-                globe_points = load_visible_globe_points(forward_vec, zoom,
-                                                         width, height)
-
+                globe_points = load_visible_globe_points(
+                    forward_vec, zoom, width, height, aspect_ratio
+                )
 
             state = (angle_x, angle_y, angle_z, zoom, offset_x, offset_y)
 
@@ -148,14 +159,20 @@ def main(stdscr):
                 buffer.erase()
 
                 if is_global:
-                    log(f"[DEBUG] angle_x = {angle_x}, angle_y = {angle_y},\
-                        angle_z = {angle_z}")
-                    projected = project_globe(globe_points, angle_x, angle_y,
-                                              angle_z, zoom, offset_x,
-                                              offset_y)
+                    log(f"[\033[92mDEBUG\033[0m] angle_x = {angle_x}, angle_y = {angle_y}, angle_z = {angle_z}")
+                    projected = project_globe(
+                        globe_points,
+                        angle_x, angle_y, angle_z,
+                        zoom, offset_x, offset_y,
+                        aspect_ratio=aspect_ratio
+                    )
+
                 else:
-                    projected = project_map(map_data, angle_x, angle_y,
-                                            angle_z, zoom, offset_x, offset_y)
+                    projected = project_map(
+                        map_data,
+                        angle_x, angle_y, angle_z,
+                        zoom, offset_x, offset_y
+                    )
 
                 render_map(buffer, projected)
 
@@ -170,6 +187,7 @@ def main(stdscr):
                                       f"Lat: {lat: .4f}, Lon: {lon: .4f}")
                     except:
                         pass
+
                 elif is_global:
                     from globe_tile_manager import latlon_from_vector
                     lat, lon = latlon_from_vector(forward_vec)
@@ -191,4 +209,11 @@ def main(stdscr):
 
 
 if __name__ == '__main__':
-    curses.wrapper(main)
+    try:
+        curses.wrapper(main)
+    except Exception as e:
+        import traceback
+        with open("debug.log", "a") as f:
+            f.write(f"{datetime.datetime.now()} |[\033[91mFATAL\033[0m] Uncaught Exception: {e}\n")
+            traceback.print_exc(file=f)
+        raise

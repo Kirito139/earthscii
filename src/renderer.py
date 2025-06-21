@@ -11,16 +11,16 @@ def log(msg):
 def render_map(buffer, projected_points):
     chars = ".,:-=+*#%@"
     if not projected_points:
-        log("[WARN] No projected points")
+        log("[\033[93mWARN\033[0m] No projected points")
         return
 
     height, width = buffer.getmaxyx()
     min_depth = min(p[2] for p in projected_points)
     max_depth = max(p[2] for p in projected_points)
     depth_range = max_depth - min_depth or 1
-    log(f"[RENDER] Screen size = {width}x{height}")
-    log(f"[RENDER] Depth range: {min_depth} to {max_depth}")
-    log(f"[RENDER] First few points: {projected_points[:5]}")
+    log(f"[\033[94mRENDER\033[0m] Screen size = {width}x{height}")
+    log(f"[\033[94mRENDER\033[0m] Depth range: {min_depth} to {max_depth}")
+    log(f"[\033[94mRENDER\033[0m] First few points: {projected_points[:5]}")
 
 
     for x, y, depth in projected_points:
