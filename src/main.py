@@ -1,6 +1,7 @@
 """Display a 3D map in a terminal window."""
 import curses
 import time
+import sys
 from projection import project_map
 from renderer import render_map
 from map_loader import load_dem_as_points
@@ -19,8 +20,7 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
 
-    map_data, transform = load_dem_as_points(
-        "/Users/lmulder/earthscii/data/n37_w123_1arc_v3.tif")
+    map_data, transform = load_dem_as_points(sys.argv[1])
 
     angle_x = 0
     angle_y = 90
