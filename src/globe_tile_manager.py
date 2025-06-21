@@ -1,5 +1,6 @@
 import math
-import requests
+import shutil
+import urllib.request
 from pathlib import Path
 from etopo_loader import load_etopo_as_sphere_points
 import datetime
@@ -50,17 +51,13 @@ def download_etopo2022_tile(lat, lon):
     url = base_url + fname
     print(f"Downloading {fname}...")
     try:
-        r = requests.get(url, stream=True)
-        if r.status_code == 200:
-            with open(partial_path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
+        with urllib.request.urlopen(url) as response:
+            with open(partial_path, "wb") as out_file:
+                shutil.copyfileobj(response, out_file)
             partial_path.rename(local_path)
             return str(local_path)
-        else:
-            print(f"Failed to fetch: {url} ({r.status_code})")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error downloading {url}: {e}")
         if partial_path.exists():
             partial_path.unlink()
     return None
