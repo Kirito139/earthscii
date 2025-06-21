@@ -3,4 +3,12 @@
 Input any .tif DEM and get an interactive 3d visualization, rendered in ASCII!
 Colors are currently based on depth. A DEM of the San Francisco Bay Area has been included in `./data` as a demo.
 
+# Installation
+For now, just clone into your home directory.
+
+# Usage
+To run, call `python3 ~/earthscii/src/main.py <PATH_TO_DEM>`.
+Arrow keys to pan, `w`/`s` for **x** rotation, `,`/`.` for **y** rotation, `a`/`d` for **z** rotation, `=`/`-` for zoom. `r` resets viewing angle. `q` to quit.
+
+
 Inspired by [mapscii](https://github.com/rastapasta/mapscii).
