@@ -18,12 +18,12 @@ def render_map(buffer, projected_points):
             ch = chars[int(norm * (len(chars) - 1))]
 
             # Assign color based on height
-            if norm < 0.3:
-                color = curses.color_pair(1)  # green
+            if norm < 0.045:
+                color = curses.color_pair(1)
             elif norm < 0.6:
-                color = curses.color_pair(2)  # yellow
+                color = curses.color_pair(2)
             else:
-                color = curses.color_pair(3)  # white
+                color = curses.color_pair(3)
 
             try:
                 buffer.addch(iy, ix, ch, color)

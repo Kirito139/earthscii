@@ -15,15 +15,15 @@ def main(stdscr):
     curses.start_color()
 
     # Define color pairs (foreground, background)
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
 
     map_data, transform = load_dem_as_points(
-        "/home/lmulder/earthscii/data/n37_w123_1arc_v3.tif")
+        "/Users/lmulder/earthscii/data/n37_w123_1arc_v3.tif")
 
     angle_x = 0
-    angle_y = 0
+    angle_y = 90
     angle_z = 0
     zoom = 1.0
     height, width = stdscr.getmaxyx()
@@ -75,8 +75,12 @@ def main(stdscr):
             elif key == curses.KEY_RIGHT:
                 offset_x += 1
                 changed = True
+            elif key == ord('r'):
+                angle_x, angle_y, angle_z = 0, 90, 0
+                changed = True
 
             if changed:
+                angle_x = max(min(angle_x, 89), -89)  # limit to +/- 89 degrees
                 stdscr.refresh()
 
             state = (angle_x, angle_y, angle_z, zoom, offset_x, offset_y)

@@ -2,7 +2,7 @@
 import rasterio
 
 
-def load_dem_as_points(path, stride=16, z_scale=0.005, transformable=True):
+def load_dem_as_points(path, stride=16, z_scale=0.5, transformable=True):
     """
     Load a DEM file (GeoTIFF) and convert it to a list of 3D points.
 
@@ -13,6 +13,9 @@ def load_dem_as_points(path, stride=16, z_scale=0.005, transformable=True):
         transform = dataset.transform
         width = elevation.shape[1]
         height = elevation.shape[0]
+
+        # mask out nodata values
+        valid = elevation != dataset.nodata
 
         points = []
         for y in range(0, height, stride):
