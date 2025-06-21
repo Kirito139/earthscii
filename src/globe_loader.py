@@ -1,4 +1,3 @@
-# globe_loader.py
 import rasterio
 import math
 
