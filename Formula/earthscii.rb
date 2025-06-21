@@ -10,8 +10,8 @@ class Earthscii < Formula
   depends_on "rasterio"
 
   def install
-    system "pip3", "install", "."
-    bin.install_symlink libexec/"bin"/"earthscii"
+    ENV["PIP_BREAK_SYSTEM_PACKAGES"] = "1"
+    system "pip3", "install", ".", "--prefix=#{prefix}"
   end
 
   test do
