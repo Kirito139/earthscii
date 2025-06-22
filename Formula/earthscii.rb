@@ -1,8 +1,8 @@
 class Earthscii < Formula
   desc "Terminal-based 3D Earth terrain viewer"
   homepage "https://github.com/Kirito139/earthscii"
-  url "https://github.com/Kirito139/earthscii/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "c7839386b7e980ab0f1fbf22bb10616a2967f601b8133af30bf024ba1fd6bdf4"
+  url "https://github.com/Kirito139/earthscii/archive/refs/tags/v0.1.1.tar.gz"
+  sha256 "17ac2aaee665fc10d49748adfc6c3b75ce5801827e997296fd1e4ed9b0723af1"
   license "GPL-3.0-or-later"
 
   depends_on "python@3.11"
