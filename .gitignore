@@ -1,9 +1,17 @@
 tiles/
 debug.log
 debug_projection.log
+data/
+*.partial
+
+# Packaging artifacts
+*.egg
 dist/
 build/
-*.partial
+
+*.egg-info/
+
+*.tar.gz
 
 # macOS
 .DS_Store
@@ -21,7 +29,7 @@ __pycache__/
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
+# *.spec # uncomment if you want to ignore all, but leave earthscii.spec if it's tracked
 
 # Installer logs
 pip-log.txt
