@@ -16,11 +16,11 @@ def main_wrapper():
     """Entry point for pip-installed script"""
     # Parse command-line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("tile", nargs="?", help="Path to a local tile")
-    parser.add_argument("--globe", action="store_true", help="Enable global view")
-    parser.add_argument("--lat", type=float, help="Initial latitude")
-    parser.add_argument("--lon", type=float, help="Initial longitude")
-    parser.add_argument( "--aspect", type=float, default=None, help="Override aspect ratio")
+    parser.add_argument("tile", nargs="?", help="Path to a local .tif DEM tile")
+    parser.add_argument("--globe", action="store_true", help="Enable global view (janky for now)")
+    parser.add_argument("--lat", type=float, help="Initial latitude—global view only")
+    parser.add_argument("--lon", type=float, help="Initial longitude—global view only")
+    parser.add_argument( "--aspect", type=float, default=None, help="Override aspect ratio (default: 0.5), because fonts are taller than they are wide")
 
     args = parser.parse_args()
 
