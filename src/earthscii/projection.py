@@ -26,9 +26,9 @@ def rotate_xyz(x, y, z, angle_x, angle_y, angle_z):
     return x, y, z
 
 
-def project_map(map_data, angle_x=0, angle_y=0, angle_z=0, zoom=1.0, offset_x=0, offset_y=0):
+def project_map(map_data, angle_x=0, angle_y=0, angle_z=0, zoom=1.0,
+                offset_x=0, offset_y=0, aspect_ratio=0.5):
     projected = []
-    ASPECT_RATIO = 0.5  # or tune to match your font
 
     # Convert angles to radians
     ax = math.radians(angle_x)
@@ -65,7 +65,7 @@ def project_map(map_data, angle_x=0, angle_y=0, angle_z=0, zoom=1.0, offset_x=0,
 
             # Project point onto screen axes
             sx = int(np.dot(point, right) * zoom) + offset_x
-            sy = int(np.dot(point, up) * zoom * ASPECT_RATIO) + offset_y
+            sy = int(np.dot(point, up) * zoom * aspect_ratio) + offset_y
             sz = np.dot(point, forward)
 
             # Apply post-projection Z rotation to screen coords

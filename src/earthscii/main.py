@@ -5,6 +5,8 @@ import argparse
 import numpy as np
 import rasterio
 import datetime
+import traceback
+import sys
 from rasterio.transform import xy
 from earthscii.projection import project_map
 from earthscii.renderer import render_map
@@ -15,24 +17,30 @@ from earthscii.globe_tile_manager import vector_from_latlon
 from earthscii.utils import log
 from importlib.resources import files
 
-
-def main_wrapper():
-    """Entry point for pip-installed script"""
-    # Parse command-line arguments
+def parse_args():
+    """Parse command-line arguments"""
     parser = argparse.ArgumentParser()
     parser.add_argument("tile", nargs="?", help="Path to a local .tif DEM tile")
     parser.add_argument("--globe", action="store_true", help="Enable global view (janky for now)")
     parser.add_argument("--lat", type=float, help="Initial latitude—global view only")
     parser.add_argument("--lon", type=float, help="Initial longitude—global view only")
-    parser.add_argument( "--aspect", type=float, default=None, help="Override aspect ratio (default: 0.5), because fonts are taller than they are wide")
+    parser.add_argument( "--aspect", type=float, default=None, help="Override aspect ratio (default: 0.5), to compensate for fonts being taller than they are wide")
     parser.add_argument("--demo", action="store_true", help="Run with a bundled demo tile")
     parser.add_argument("--tilewalk", action="store_true", help="Explore ETOPO tiles one at a time (requires internet)")
+    parser.add_argument("--debug", action="store_true", help="Enable verbose debug output on crash")
 
-    args = parser.parse_args()
+    return parser, parser.parse_args()
+
+
+def main_wrapper():
+    """Entry point for pip-installed script"""
+    # Parse command-line arguments
+
+    parser, args = parse_args()
 
     if not any(vars(args).values()):
         parser.print_help()
-        return
+        sys.exit(1)
 
     curses.wrapper(lambda stdscr: main(stdscr, args))
 
@@ -79,10 +87,14 @@ def main(stdscr, args):
     angle_x = 0
     angle_y = 90
     angle_z = 0
-    zoom = 0.8
     height, width = stdscr.getmaxyx()
     aspect_ratio = args.aspect if args.aspect is not None else min(height / width, 0.4)
     is_global = False
+
+    zoom = 0.2
+
+    offset_x, offset_y = width // 2, height // 2
+    prev_state = None
 
     if args.tilewalk:
         tilewalk_mode(stdscr, args)
@@ -92,19 +104,40 @@ def main(stdscr, args):
         )
         is_global = True
     else:
-        if args.demo:
-            # Load the bundled tile using importlib.resources
-            demo_path = files("earthscii").joinpath("data/n37_w123_1arc_v3.tif")
-            path = str(demo_path)
-        elif args.tile:
-            path = args.tile
-        else:
-            raise ValueError("You must provide a tile path or use --demo.")
+        try:
+            if args.demo:
+                # Load the bundled tile using importlib.resources
+                demo_path = files("earthscii").joinpath("data/n37_w123_1arc_v3.tif")
+                path = str(demo_path)
+            elif args.tile:
+                path = args.tile
+            else:
+                raise ValueError("You must provide a tile path or use --demo.")
 
-        map_data, transform = load_dem_as_points(path)
+            map_data, transform = load_dem_as_points(path)
 
-    offset_x, offset_y = width // 2, height // 2
-    prev_state = None
+            flat_points = [pt for row in map_data for pt in row]
+            xs = [p[0] for p in flat_points]
+            ys = [p[1] for p in flat_points]
+            map_width = max(xs) - min(xs)
+            map_height = max(ys) - min(ys)
+
+            fudge_factor = 0.9
+            zoom_x = width / map_width
+            zoom_y = (height / map_height) * aspect_ratio
+            zoom = min(zoom_x, zoom_y) * fudge_factor
+
+        except FileNotFoundError:
+            log(f"[\033[91mERROR\033[0m] File not found: {path}\n")
+            fatal(stdscr, f"File not found: {path}")
+            return
+
+        except Exception as e:
+            log(f"[\033[91mFATAL\033[0m] Error loading tile: {e}\n")
+            fatal(stdscr, f"Failed to load tile '{path}': {e}", debug=args.debug, exception=e)
+            return
+
+        is_global = False
 
     buffer = curses.newwin(height, width, 0, 0)
 
@@ -143,7 +176,8 @@ def main(stdscr, args):
                     projected = project_map(
                         map_data,
                         angle_x, angle_y, angle_z,
-                        zoom, offset_x, offset_y
+                        zoom, offset_x, offset_y,
+                        aspect_ratio=aspect_ratio
                     )
 
                 render_map(buffer, projected)
@@ -153,7 +187,8 @@ def main(stdscr, args):
                 if not is_global:
                     # display lat/lon of center
                     try:
-                        # multiply by stride
+                        # Approximate screen center in raster pixel coordinates
+                        # (stride = 16)
                         lon, lat = xy(transform, (height // 2) * 16,
                                       (width // 2) * 16)
                     except:
@@ -176,15 +211,17 @@ def main(stdscr, args):
 
 
 if __name__ == '__main__':
+    args = parse_args()
+
     try:
-        curses.wrapper(main)
+        curses.wrapper(lambda stdscr: main(stdscr, args))
     except Exception as e:
-        import traceback
         log(f"[\033[91mFATAL\033[0m] Uncaught Exception: {e}")
+        if args.debug:
+            traceback.print_exc()
         with open("debug.log", "a") as f:
             traceback.print_exc(file=f)
         raise
-
 def handle_keys(key, angle_x, angle_y, angle_z, zoom, offset_x, offset_y):
     changed = False
 
@@ -256,6 +293,7 @@ def init_curses(stdscr):
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
 
 def forward_from_angles(angle_x, angle_y):
@@ -263,3 +301,20 @@ def forward_from_angles(angle_x, angle_y):
     fy = np.sin(np.radians(angle_x))
     fz = np.sin(np.radians(angle_y)) * np.cos(np.radians(angle_x))
     return np.array([fx, fy, fz])
+
+
+def fatal(stdscr, message, debug=False, exception=None):
+    stdscr.clear()
+    try:
+        stdscr.addstr(0, 0, f"ERROR: {message}", curses.color_pair(4))
+    except curses.error:
+        stdscr.addstr(0, 0, f"ERROR: {message}")
+    stdscr.refresh()
+
+    if debug and exception:
+        with open("debug.log", "a") as f:
+            f.write(f"Fatal error: {type(exception).__name__}: {exception}\n")
+            traceback.print_exception(type(exception), exception, exception.__traceback__, file=f)
+
+    time.sleep(3)
+    raise KeyboardInterrupt()

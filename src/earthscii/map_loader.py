@@ -3,6 +3,7 @@ import rasterio
 
 
 def load_tile_at(lat, lon):
+    """Load a tile at the given latitude and longitude."""
     fname = f"data/n{lat:02d}_w{abs(lon):03d}_1arc_v3.tif"
     return load_dem_as_points(fname)
 
