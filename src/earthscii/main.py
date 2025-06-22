@@ -12,7 +12,22 @@ from earthscii.globe_tile_manager import vector_from_latlon
 from earthscii.utils import log
 
 
-def main(stdscr):
+def main_wrapper():
+    """Entry point for pip-installed script"""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("tile", nargs="?", help="Path to a local tile")
+    parser.add_argument("--globe", action="store_true", help="Enable global view")
+    parser.add_argument("--lat", type=float, help="Initial latitude")
+    parser.add_argument("--lon", type=float, help="Initial longitude")
+    parser.add_argument( "--aspect", type=float, default=None, help="Override aspect ratio")
+
+    args = parser.parse_args()
+
+    curses.wrapper(lambda stdscr: main(stdscr, args))
+
+
+def main(stdscr, args):
     log("[\033[32mINFO\033[0m] New session started\n------------")
     curses.curs_set(0)
     stdscr.nodelay(True)
@@ -24,24 +39,6 @@ def main(stdscr):
     curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
-
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("tile", nargs="?", help="Path to a local tile")
-    parser.add_argument("--globe", action="store_true",
-                        help="Enable global view")
-    parser.add_argument("--lat", type=float, help="Initial latitude")
-    parser.add_argument("--lon", type=float, help="Initial longitude")
-    parser.add_argument(
-        "--aspect",
-        type=float,
-        default=None,
-        help="Override aspect ratio (e.g., 0.5 for standard terminals)"
-    )
-
-
-    args = parser.parse_args()
-
 
     is_global = args.globe
 
