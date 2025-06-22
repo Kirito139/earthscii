@@ -2,6 +2,11 @@
 import rasterio
 
 
+def load_tile_at(lat, lon):
+    fname = f"data/n{lat:02d}_w{abs(lon):03d}_1arc_v3.tif"
+    return load_dem_as_points(fname)
+
+
 def load_dem_as_points(path, stride=16, z_scale=0.5, transformable=True):
     """
     Load a DEM file (GeoTIFF) and convert it to a list of 3D points.
