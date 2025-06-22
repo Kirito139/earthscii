@@ -10,6 +10,7 @@ from earthscii.globe_projection import project_globe
 from earthscii.globe_tile_manager import load_visible_globe_points
 from earthscii.globe_tile_manager import vector_from_latlon
 from earthscii.utils import log
+from importlib.resources import files
 
 
 def main_wrapper():
@@ -21,6 +22,7 @@ def main_wrapper():
     parser.add_argument("--lat", type=float, help="Initial latitude—global view only")
     parser.add_argument("--lon", type=float, help="Initial longitude—global view only")
     parser.add_argument( "--aspect", type=float, default=None, help="Override aspect ratio (default: 0.5), because fonts are taller than they are wide")
+    parser.add_argument("--demo", action="store_true", help="Run with a bundled demo tile")
 
     args = parser.parse_args()
 
@@ -74,9 +76,14 @@ def main(stdscr, args):
         )
 
     else:
-        if not args.tile:
-            raise ValueError("Local tile path must be provided when not using --globe")
-        map_data, transform = load_dem_as_points(args.tile)
+        if args.demo:
+            # Load the bundled tile using importlib.resources
+            demo_path = files("earthscii").joinpath("data/n37_w123_1arc_v3.tif")
+            map_data, transform = load_dem_as_points(str(demo_path))
+        elif args.tile:
+            map_data, transform = load_dem_as_points(args.tile)
+        else:
+            raise ValueError("You must provide a tile path or use --demo.")
 
     offset_x, offset_y = width // 2, height // 2
     prev_state = None
