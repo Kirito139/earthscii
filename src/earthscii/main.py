@@ -88,7 +88,7 @@ def main(stdscr, args):
     angle_y = 90
     angle_z = 0
     height, width = stdscr.getmaxyx()
-    aspect_ratio = args.aspect if args.aspect is not None else min(height / width, 0.4)
+    aspect_ratio = args.aspect if args.aspect is not None else 0.5
     is_global = False
 
     zoom = 0.2
