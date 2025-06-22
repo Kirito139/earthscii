@@ -1,6 +1,6 @@
 [project]
 name = "earthscii"
-version = "0.1.10"
+version = "0.1.15"
 description = "Terminal-based 3D terrain viewer."
 authors = [{ name = "Lennier Mulder", email = "lenniermulder@icloud.com" }]
 license = "GPL-3.0-or-later"
