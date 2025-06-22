@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-earthscii = "src.main:main_wrapper"
+earthscii = "earthscii.main:main_wrapper"
 
 [build-system]
 requires = ["setuptools", "wheel"]

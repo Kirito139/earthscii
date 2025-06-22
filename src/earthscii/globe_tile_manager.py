@@ -2,13 +2,8 @@ import math
 import shutil
 import urllib.request
 from pathlib import Path
-from etopo_loader import load_etopo_as_sphere_points
-import datetime
-
-def log(msg):
-    """Log a message to debug.log."""
-    with open("debug.log", "a") as f:
-        f.write(f"{datetime.datetime.now()} | {msg}\n")
+from earthscii.etopo_loader import load_etopo_as_sphere_points
+from earthscii.utils import log
 
 
 TILE_DIR = Path("./tiles")

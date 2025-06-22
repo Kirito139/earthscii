@@ -16,11 +16,11 @@ def latlon_to_xyz(lat, lon, elevation):
 
 def load_etopo_as_sphere_points(path, stride=32, z_scale=1.0):
     """
-    Load ETOPO1 GeoTIFF and convert to 3D sphere points.
+    Convert a GeoTIFF file to a list of 3D sphere points.
 
     Args
     ----
-    path: path to ETOPO1_Ice_g_geotiff.tif
+    path: path to GeoTIFF file
     stride: sampling stride in pixels
     z_scale: scale factor for exaggerating elevation
 

@@ -1,11 +1,6 @@
 """Map depth to ASCII and place chars."""
 import curses
-import datetime
-
-def log(msg):
-    """Log a message to debug.log."""
-    with open("debug.log", "a") as f:
-        f.write(f"{datetime.datetime.now()} | {msg}\n")
+from earthscii.utils import log
 
 
 def render_map(buffer, projected_points):
@@ -21,7 +16,6 @@ def render_map(buffer, projected_points):
     log(f"[\033[94mRENDER\033[0m] Screen size = {width}x{height}")
     log(f"[\033[94mRENDER\033[0m] Depth range: {min_depth} to {max_depth}")
     log(f"[\033[94mRENDER\033[0m] First few points: {projected_points[:5]}")
-
 
     for x, y, depth in projected_points:
         ix, iy = int(x), int(y)
@@ -45,6 +39,6 @@ def render_map(buffer, projected_points):
         # Draw center marker
         try:
             buffer.addstr(height // 2, width // 2, "X",
-                            curses.color_pair(3))
+                          curses.color_pair(3))
         except:
             log("[ERROR] Failed to draw center marker")

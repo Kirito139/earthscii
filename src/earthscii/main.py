@@ -3,18 +3,13 @@ import curses
 import time
 import argparse
 import numpy as np
-from projection import project_map
-from renderer import render_map
-from map_loader import load_dem_as_points
-from globe_projection import project_globe
-from globe_tile_manager import load_visible_globe_points
-from globe_tile_manager import vector_from_latlon
-import datetime
-
-def log(msg):
-    """Log a message to debug.log."""
-    with open("debug.log", "a") as f:
-        f.write(f"{datetime.datetime.now()} | {msg}\n")
+from earthscii.projection import project_map
+from earthscii.renderer import render_map
+from earthscii.map_loader import load_dem_as_points
+from earthscii.globe_projection import project_globe
+from earthscii.globe_tile_manager import load_visible_globe_points
+from earthscii.globe_tile_manager import vector_from_latlon
+from earthscii.utils import log
 
 
 def main(stdscr):

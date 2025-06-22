@@ -1,12 +1,6 @@
 import math
 import numpy as np
-import datetime
-
-
-def log(msg):
-    """Log a message to debug.log."""
-    with open("debug.log", "a") as f:
-        f.write(f"{datetime.datetime.now()} | {msg}\n")
+from earthscii.utils import log
 
 
 def project_globe(points, angle_x=0, angle_y=0, angle_z=0, zoom=1.0,

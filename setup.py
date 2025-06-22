@@ -11,7 +11,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "earthscii = main:main_wrapper",
+            "earthscii = earthscii.main:main_wrapper",
         ],
     },
 )
